@@ -1,55 +1,63 @@
 using UnityEngine;
-using UnityEngine.AI;
+
 public class CustomerAI : MonoBehaviour
 {
     public Shelf targetShelf;
     public Transform counterPoint;
-    private enum State {
-        Entering,
-        Browsing,
-        GoingToCounter,
-        WaitingCheckout,
-        Leaving
-    }
+    public float moveSpeed = 2f;
+
+    private enum State { Entering, Browsing, GoingToCounter, WaitingCheckout, Leaving }
     private State currentState;
+
     private GameItem selectedItem;
+    private Vector3 targetPos;
 
     void Start()
     {
         currentState = State.Entering;
-        ChooseShelf();
+        if (targetShelf != null) targetPos = targetShelf.transform.position;
     }
 
-    // Update is called once per frame
     void Update()
     {
-        switch (currentState) {
+        switch (currentState)
+        {
             case State.Entering:
-                GoToShelf();
+                MoveTo(targetPos, () => currentState = State.Browsing);
                 break;
+
             case State.Browsing:
                 GrabItem();
                 break;
+
             case State.GoingToCounter:
-                GoToCounter();
+                MoveTo(counterPoint.position, () =>
+                {
+                    CheckoutSystem.Instance.AddCustomer(this, selectedItem);
+                    currentState = State.WaitingCheckout;
+                });
                 break;
+
             case State.WaitingCheckout:
-            // wait untiy CheckoutSystem processes this customer
+                // just stand there until CheckoutSystem processes
+                break;
+
             case State.Leaving:
-                LeaveStore();
+                MoveTo(new Vector3(-10, 0, 0), () => Destroy(gameObject)); // walk out of store
                 break;
         }
+    }
 
-    }
-    void ChooseShelf()
+    void MoveTo(Vector3 destination, System.Action onArrive)
     {
-        currentState = State.Browsing;
+        transform.position = Vector3.MoveTowards(transform.position, destination, moveSpeed * Time.deltaTime);
+
+        if (Vector3.Distance(transform.position, destination) < 0.1f)
+        {
+            onArrive?.Invoke();
+        }
     }
-    void GoToShelf()
-    {
-        // move character TO DO:
-        currentState = State.Browsing;
-    }
+
     void GrabItem()
     {
         if (targetShelf != null && targetShelf.GetItemCount() > 0)
@@ -58,18 +66,12 @@ public class CustomerAI : MonoBehaviour
         }
         currentState = State.GoingToCounter;
     }
-    void GoToCounter()
-    {
-        transform.position = counterPoint.position;
-        CheckoutSystem.Instance.AddCustomer(this, selectedItem);
-        currentState = State.WaitingCheckout;
-    }
+
     public void FinishCheckout()
     {
         currentState = State.Leaving;
     }
-    void LeaveStore()
-    {
-        Destroy(gameObject);
-    }
+
+    public GameItem GetItem() => selectedItem;
+    public bool HasItem() => selectedItem != null;
 }

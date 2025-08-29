@@ -36,4 +36,8 @@ public class Shelf : MonoBehaviour
     {
         return new List<GameItem> (itemsOnShelf);
     }
+    void OnMouseDown()
+    {
+        ShelfUIController.Instance.OpenShelfUI(this);
+    }
 }

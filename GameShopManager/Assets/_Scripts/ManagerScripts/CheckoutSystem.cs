@@ -1,28 +1,42 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
+
 public class CheckoutSystem : MonoBehaviour
 {
     public static CheckoutSystem Instance;
 
     private Queue<(CustomerAI, GameItem)> checkoutQueue = new Queue<(CustomerAI, GameItem)>();
-    private void Awake()
+
+    void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
-    // Update is called once per frame
-    void Update()
+
+    public void AddCustomer(CustomerAI customer, GameItem item)
     {
-        if (checkoutQueue.Count > 0 && Input.GetMouseButtonDown(0)) // Left click to checkout
+        checkoutQueue.Enqueue((customer, item));
+    }
+
+    public bool HasCustomer()
+    {
+        return checkoutQueue.Count > 0;
+    }
+
+    public (CustomerAI, GameItem) PeekNextCustomer()
+    {
+        if (checkoutQueue.Count > 0)
+            return checkoutQueue.Peek();
+        return (null, null);
+    }
+
+    public void ProcessNextCustomer()
+    {
+        if (checkoutQueue.Count > 0)
         {
             var (customer, item) = checkoutQueue.Dequeue();
             GameManager.Instance.AddMoney(item.salePrice);
             customer.FinishCheckout();
         }
     }
-    public void AddCustomer(CustomerAI customer ,GameItem item)
-    {
-        checkoutQueue.Enqueue((customer, item));
-    }
-
 }
