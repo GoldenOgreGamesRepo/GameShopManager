@@ -7,7 +7,8 @@ public class InventoryManager : MonoBehaviour
     private Dictionary<GameItem, int> backroomInventory = new Dictionary<GameItem, int>();
     [Header("Starting Items")]
     public GameItem[] startingItems;
-    
+    public int[] startingQuantities; // must match startingItems length
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -16,9 +17,9 @@ public class InventoryManager : MonoBehaviour
 
     private void Start()
     {
-        foreach (var item in startingItems)
+        for (int i = 0; i < startingItems.Length; i++)
         {
-            AddToBackroom(item,1);
+            AddToBackroom(startingItems[i], startingQuantities[i]);
         }
     }
     // Fixed AddToBackroom

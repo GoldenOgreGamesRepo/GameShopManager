@@ -3449,10 +3449,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventoryManager
   startingItems:
+  - {fileID: 11400000, guid: 2e2c65509fde0f04e8f76a46b80d1fde, type: 2}
   - {fileID: 11400000, guid: a65b667b33b48284f842694499b44a60, type: 2}
-  - {fileID: 11400000, guid: a65b667b33b48284f842694499b44a60, type: 2}
-  - {fileID: 11400000, guid: a65b667b33b48284f842694499b44a60, type: 2}
-  - {fileID: 11400000, guid: a65b667b33b48284f842694499b44a60, type: 2}
+  - {fileID: 11400000, guid: f6d091f1ac2ca654c8a89c9b33c8a6f3, type: 2}
+  - {fileID: 11400000, guid: 631056c7db39e1847aed12783fde1354, type: 2}
+  - {fileID: 11400000, guid: 9d96cbfbfc18c654296b50823ac17d4d, type: 2}
+  startingQuantities: 060000000700000005000000090000000a000000
 --- !u!4 &1093108434
 Transform:
   m_ObjectHideFlags: 0

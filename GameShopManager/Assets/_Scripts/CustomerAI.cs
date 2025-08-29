@@ -15,6 +15,7 @@ public class CustomerAI : MonoBehaviour
     void Start()
     {
         currentState = State.Entering;
+        Debug.Log("Shelf item count at start: " + targetShelf.GetItemCount());
         if (targetShelf != null)
             targetPos = targetShelf.transform.position;
         else
