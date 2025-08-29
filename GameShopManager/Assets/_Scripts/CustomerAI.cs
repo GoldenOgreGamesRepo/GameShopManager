@@ -11,7 +11,7 @@ public class CustomerAI : MonoBehaviour
 
     private GameItem selectedItem;
     private Vector3 targetPos;
-
+    public Transform targetCounterPosition; // assigned by Counter when clicked
     void Start()
     {
         currentState = State.Entering;
@@ -28,47 +28,60 @@ public class CustomerAI : MonoBehaviour
 
     void Update()
     {
-        switch (currentState)
+        // In GoingToCounter state, move to targetCounterPosition if set
+        if (currentState == State.GoingToCounter && targetCounterPosition != null)
         {
-            case State.Entering:
-                MoveTo(targetPos, () => currentState = State.Browsing);
-                break;
-
-            case State.Browsing:
-                GrabItem();
-                break;
-
-            case State.GoingToCounter:
-                if (counterPoint != null)
-                {
-                    MoveTo(counterPoint.position, () =>
-                    {
-                        if (CheckoutSystem.Instance != null && selectedItem != null)
-                        {
-                            CheckoutSystem.Instance.AddCustomer(this, selectedItem);
-                        }
-                        else
-                        {
-                            Debug.LogWarning($"{name}: CheckoutSystem or item missing.");
-                        }
-                        currentState = State.WaitingCheckout;
-                    });
-                }
-                else
-                {
-                    Debug.LogWarning($"{name}: No counter assigned, leaving store.");
-                    currentState = State.Leaving;
-                }
-                break;
-
-            case State.WaitingCheckout:
-                // wait until CheckoutSystem calls FinishCheckout()
-                break;
-
-            case State.Leaving:
-                MoveTo(new Vector3(-10, 0, 0), () => Destroy(gameObject));
-                break;
+            MoveTo(targetCounterPosition.position, () =>
+            {
+                CheckoutSystem.Instance.AddCustomer(this, selectedItem);
+                currentState = State.WaitingCheckout;
+            });
         }
+        else
+        {
+            switch (currentState)
+            {
+                case State.Entering:
+                    MoveTo(targetPos, () => currentState = State.Browsing);
+                    break;
+
+                case State.Browsing:
+                    GrabItem();
+                    break;
+
+                case State.GoingToCounter:
+                    if (counterPoint != null)
+                    {
+                        MoveTo(counterPoint.position, () =>
+                        {
+                            if (CheckoutSystem.Instance != null && selectedItem != null)
+                            {
+                                CheckoutSystem.Instance.AddCustomer(this, selectedItem);
+                            }
+                            else
+                            {
+                                Debug.LogWarning($"{name}: CheckoutSystem or item missing.");
+                            }
+                            currentState = State.WaitingCheckout;
+                        });
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"{name}: No counter assigned, leaving store.");
+                        currentState = State.Leaving;
+                    }
+                    break;
+
+                case State.WaitingCheckout:
+                    // wait until CheckoutSystem calls FinishCheckout()
+                    break;
+
+                case State.Leaving:
+                    MoveTo(new Vector3(-10, 0, 0), () => Destroy(gameObject));
+                    break;
+            }
+        }
+        
     }
 
     void MoveTo(Vector3 destination, System.Action onArrive)
@@ -86,10 +99,13 @@ public class CustomerAI : MonoBehaviour
         if (targetShelf != null && targetShelf.GetItemCount() > 0)
         {
             selectedItem = targetShelf.TakeItem();
+
         }
 
-        if (selectedItem != null)
+        if (selectedItem != null) { 
             currentState = State.GoingToCounter;
+            Debug.Log($"{name}: grabbed item = {selectedItem?.itemName}");
+        }
         else
         {
             Debug.Log($"{name}: Could not grab item, leaving store.");

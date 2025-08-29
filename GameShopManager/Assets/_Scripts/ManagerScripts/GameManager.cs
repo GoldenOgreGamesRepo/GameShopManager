@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.InputSystem;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,7 +14,7 @@ public class GameManager : MonoBehaviour
     [Header("UI")]
     public TextMeshProUGUI dayTimerText;
     public TextMeshProUGUI moneyText;
-
+    
     [Header("Money")]
     public int money = 100;
 
@@ -30,8 +31,21 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        
         if (!storeOpen) return;
-
+        Vector2 mousePos = Mouse.current.position.ReadValue();
+        if (Mouse.current.leftButton.wasPressedThisFrame) // left click
+        {
+            Ray ray = Camera.main.ScreenPointToRay(mousePos);
+            if (Physics.Raycast(ray, out RaycastHit hit, 100f))
+            {
+                Counter counter = hit.collider.GetComponent<Counter>();
+                if (counter != null)
+                {
+                    counter.OnClick();
+                }
+            }
+        }
         timer -= Time.deltaTime;
         UpdateTimerUI();
 
@@ -40,7 +54,7 @@ public class GameManager : MonoBehaviour
             EndDay();
         }
     }
-
+    
     void UpdateTimerUI()
     {
         int minutes = Mathf.FloorToInt(timer / 60);
