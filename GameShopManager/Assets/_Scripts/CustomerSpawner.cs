@@ -2,18 +2,19 @@ using UnityEngine;
 
 public class CustomerSpawner : MonoBehaviour
 {
-    [Header("Spawner Settings")]
+    [Header("Prefabs & Spawn Points")]
     public GameObject customerPrefab;
-    public Transform spawnPoint;     // entrance location
-    public Transform counterPoint;   // where customers go to checkout
-    public Shelf[] shelves;          // assign shelves in Inspector
+    public Transform[] spawnPoints;
+    public Shelf[] shelves;
+    public Transform counterPoint;
 
     [Header("Spawn Timing")]
-    public float spawnIntervalMin = 5f;
-    public float spawnIntervalMax = 10f;
+    public float minSpawnTime = 3f;
+    public float maxSpawnTime = 8f;
 
     private float nextSpawnTime;
-    public bool canSpawn = true;
+    private bool canSpawn = true;
+
     void Start()
     {
         ScheduleNextSpawn();
@@ -21,29 +22,66 @@ public class CustomerSpawner : MonoBehaviour
 
     void Update()
     {
-        if (!canSpawn) return;
-        if (Time.time >= nextSpawnTime && GameManager.Instance.IsStoreOpen())
+        if (!canSpawn || !GameManager.Instance.IsStoreOpen()) return;
+
+        if (Time.time >= nextSpawnTime)
         {
             SpawnCustomer();
             ScheduleNextSpawn();
         }
     }
 
-    void SpawnCustomer()
+    private void ScheduleNextSpawn()
     {
-        GameObject customerObj = Instantiate(customerPrefab, spawnPoint.position, Quaternion.identity);
-
-        CustomerAI customer = customerObj.GetComponent<CustomerAI>();
-        customer.targetShelf = shelves[Random.Range(0, shelves.Length)];
-        customer.counterPoint = counterPoint;
+        nextSpawnTime = Time.time + Random.Range(minSpawnTime, maxSpawnTime);
     }
 
-    void ScheduleNextSpawn()
-    {
-        nextSpawnTime = Time.time + Random.Range(spawnIntervalMin, spawnIntervalMax);
-    }
     public void StopSpawning()
     {
         canSpawn = false;
+    }
+
+    private void SpawnCustomer()
+    {
+        if (customerPrefab == null)
+        {
+            Debug.LogWarning("CustomerSpawner: No customer prefab assigned!");
+            return;
+        }
+
+        if (spawnPoints == null || spawnPoints.Length == 0)
+        {
+            Debug.LogWarning("CustomerSpawner: No spawn points assigned!");
+            return;
+        }
+
+        if (shelves == null || shelves.Length == 0)
+        {
+            Debug.LogWarning("CustomerSpawner: No shelves assigned!");
+            return;
+        }
+
+        if (counterPoint == null)
+        {
+            Debug.LogWarning("CustomerSpawner: No counter point assigned!");
+            return;
+        }
+
+        // Pick random spawn point and shelf
+        Transform spawn = spawnPoints[Random.Range(0, spawnPoints.Length)];
+        Shelf targetShelf = shelves[Random.Range(0, shelves.Length)];
+
+        // Instantiate customer
+        GameObject customerGO = Instantiate(customerPrefab, spawn.position, Quaternion.identity);
+        CustomerAI ai = customerGO.GetComponent<CustomerAI>();
+        if (ai != null)
+        {
+            ai.targetShelf = targetShelf;
+            ai.counterPoint = counterPoint;
+        }
+        else
+        {
+            Debug.LogWarning("Customer prefab missing CustomerAI component!");
+        }
     }
 }

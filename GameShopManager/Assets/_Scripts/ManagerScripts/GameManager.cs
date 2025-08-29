@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
 
     [Header("UI")]
     public TextMeshProUGUI dayTimerText;
+    public TextMeshProUGUI moneyText;
 
     [Header("Money")]
     public int money = 100;
@@ -52,6 +53,7 @@ public class GameManager : MonoBehaviour
         timer = dayLength;
         storeOpen = true;
         Debug.Log("Store is now OPEN!");
+        InventoryManager.Instance.StockShelvesAtStart();
     }
 
     public void EndDay()

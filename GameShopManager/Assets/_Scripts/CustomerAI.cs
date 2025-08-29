@@ -15,7 +15,14 @@ public class CustomerAI : MonoBehaviour
     void Start()
     {
         currentState = State.Entering;
-        if (targetShelf != null) targetPos = targetShelf.transform.position;
+        if (targetShelf != null)
+            targetPos = targetShelf.transform.position;
+        else
+        {
+            Debug.LogWarning($"{name}: No target shelf assigned, leaving immediately.");
+            currentState = State.Leaving;
+            targetPos = new Vector3(-10, 0, 0);
+        }
     }
 
     void Update()
@@ -31,19 +38,34 @@ public class CustomerAI : MonoBehaviour
                 break;
 
             case State.GoingToCounter:
-                MoveTo(counterPoint.position, () =>
+                if (counterPoint != null)
                 {
-                    CheckoutSystem.Instance.AddCustomer(this, selectedItem);
-                    currentState = State.WaitingCheckout;
-                });
+                    MoveTo(counterPoint.position, () =>
+                    {
+                        if (CheckoutSystem.Instance != null && selectedItem != null)
+                        {
+                            CheckoutSystem.Instance.AddCustomer(this, selectedItem);
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"{name}: CheckoutSystem or item missing.");
+                        }
+                        currentState = State.WaitingCheckout;
+                    });
+                }
+                else
+                {
+                    Debug.LogWarning($"{name}: No counter assigned, leaving store.");
+                    currentState = State.Leaving;
+                }
                 break;
 
             case State.WaitingCheckout:
-                // just stand there until CheckoutSystem processes
+                // wait until CheckoutSystem calls FinishCheckout()
                 break;
 
             case State.Leaving:
-                MoveTo(new Vector3(-10, 0, 0), () => Destroy(gameObject)); // walk out of store
+                MoveTo(new Vector3(-10, 0, 0), () => Destroy(gameObject));
                 break;
         }
     }
@@ -64,7 +86,14 @@ public class CustomerAI : MonoBehaviour
         {
             selectedItem = targetShelf.TakeItem();
         }
-        currentState = State.GoingToCounter;
+
+        if (selectedItem != null)
+            currentState = State.GoingToCounter;
+        else
+        {
+            Debug.Log($"{name}: Could not grab item, leaving store.");
+            currentState = State.Leaving;
+        }
     }
 
     public void FinishCheckout()

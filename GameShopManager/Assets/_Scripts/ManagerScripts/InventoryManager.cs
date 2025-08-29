@@ -1,50 +1,94 @@
 using UnityEngine;
 using System.Collections.Generic;
+
 public class InventoryManager : MonoBehaviour
 {
     public static InventoryManager Instance;
     private Dictionary<GameItem, int> backroomInventory = new Dictionary<GameItem, int>();
-
+    [Header("Starting Items")]
+    public GameItem[] startingItems;
+    
     private void Awake()
     {
-        if(Instance == null) Instance = this;
-        else Destroy(Instance);
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
-    /// <summary>
-    /// Add items to the back room.
-    /// </summary>
-    /// <param name="item">Item</param>
-    /// <param name="amount">Quantity</param>
-    /// <returns></returns>
+
+    private void Start()
+    {
+        foreach (var item in startingItems)
+        {
+            AddToBackroom(item,1);
+        }
+    }
+    // Fixed AddToBackroom
     public bool AddToBackroom(GameItem item, int amount)
-    {
-        if (!backroomInventory.ContainsKey(item) && backroomInventory[item] >= amount)
-        {
-            backroomInventory[item] -= amount;
-            return true;
-        }
-        return false;
-    }
-    public bool RemoveFromBackroom(GameItem item, int amount)
-    {
-        if(backroomInventory.ContainsKey(item) && backroomInventory[item] >= amount)
-        {
-            backroomInventory[item] -= amount;
-            return true;
-        }
-        return false;
-    }
-    int GetBackroomCount(GameItem item)
     {
         if (backroomInventory.ContainsKey(item))
         {
-            return backroomInventory[item];
+            backroomInventory[item] += amount;
         }
+        else
+        {
+            backroomInventory[item] = amount;
+        }
+        return true;
+    }
+
+    public bool RemoveFromBackroom(GameItem item, int amount)
+    {
+        if (backroomInventory.ContainsKey(item) && backroomInventory[item] >= amount)
+        {
+            backroomInventory[item] -= amount;
+            return true;
+        }
+        return false;
+    }
+
+    public int GetBackroomCount(GameItem item)
+    {
+        if (backroomInventory.ContainsKey(item))
+            return backroomInventory[item];
         return 0;
     }
+
     public Dictionary<GameItem, int> GetInventorySnapshot()
     {
         return new Dictionary<GameItem, int>(backroomInventory);
     }
 
+    // =============================
+    // Auto-stock all shelves at day start
+    // =============================
+    public void StockShelvesAtStart()
+    {
+        Shelf[] shelves = FindObjectsByType<Shelf>(FindObjectsSortMode.None);
+
+        foreach (Shelf shelf in shelves)
+        {
+            while (shelf.GetItemCount() < shelf.capacity)
+            {
+                bool stockedSomething = false;
+
+                foreach (var kvp in GetInventorySnapshot())
+                {
+                    GameItem item = kvp.Key;
+                    int quantity = kvp.Value;
+
+                    if (quantity > 0)
+                    {
+                        if (RemoveFromBackroom(item, 1))
+                        {
+                            shelf.StockItem(item);
+                            stockedSomething = true;
+                            break; // move to next shelf slot
+                        }
+                    }
+                }
+
+                // If nothing left in backroom, stop trying
+                if (!stockedSomething) break;
+            }
+        }
+    }
 }
